@@ -32,7 +32,7 @@ angular.module('ui.multiselect', [
 
     function ($parse, $document, $compile, $interpolate, optionParser) {
       return {
-        restrict: 'E',
+        restrict: 'EA',
         require: 'ngModel',
         link: function (originalScope, element, attrs, modelCtrl) {
 
@@ -43,8 +43,10 @@ angular.module('ui.multiselect', [
             scope = originalScope.$new(),
             changeHandler = attrs.change || angular.noop;
 
+          if( !attrs.header ) attrs.header = 'Select'
           scope.items = [];
-          scope.header = 'Select';
+          
+          scope.header = attrs.header
           scope.multiple = isMultiple;
           scope.disabled = false;
 
@@ -94,7 +96,16 @@ angular.module('ui.multiselect', [
             if (angular.isDefined(newVal)) {
               markChecked(newVal);
               scope.$eval(changeHandler);
+            }else if(oldVal){
+              
+              // new value is undefined and the old
+              // is a list - the direcive should reset
+              scope.uncheckAll();
+              
             }
+            
+            
+            
             getHeaderText();
             modelCtrl.$setValidity('required', scope.valid());
           }, true);
@@ -119,7 +130,7 @@ angular.module('ui.multiselect', [
           element.append($compile(popUpEl)(scope));
 
           function getHeaderText() {
-            if (is_empty(modelCtrl.$modelValue)) return scope.header = attrs.msHeader || 'Select';
+            if (is_empty(modelCtrl.$modelValue)) return scope.header = attrs.msHeader || attrs.header;
 
               if (isMultiple) {
                   if (attrs.msSelected) {
@@ -240,6 +251,11 @@ angular.module('ui.multiselect', [
         scope.isVisible = false;
 
         scope.toggleSelect = function () {
+          console.log(
+            'Togglng select',
+            element,
+            element.hasClass('open')
+          );
           if (element.hasClass('open')) {
             element.removeClass('open');
             $document.unbind('click', clickHandler);
@@ -259,6 +275,7 @@ angular.module('ui.multiselect', [
         }
 
         scope.focus = function focus(){
+          console.log('Focusing ');
           var searchBox = element.find('input')[0];
           searchBox.focus();
         }
@@ -284,14 +301,14 @@ angular.module('multiselect.tpl.html', [])
       "  </button>\n" +
       "  <ul class=\"dropdown-menu\">\n" +
       "    <li>\n" +
-      "      <input class=\"form-control input-sm\" type=\"text\" ng-model=\"searchText.label\" autofocus=\"autofocus\" placeholder=\"Filter\" />\n" +
+      "      <input class=\"form-control input-sm\" type=\"text\" ng-model=\"searchText.label\" placeholder=\"Filter\" />\n" +
       "    </li>\n" +
       "    <li ng-show=\"multiple\" role=\"presentation\" class=\"\">\n" +
       "      <button class=\"btn btn-link btn-xs\" ng-click=\"checkAll()\" type=\"button\"><i class=\"glyphicon glyphicon-ok\"></i> Check all</button>\n" +
       "      <button class=\"btn btn-link btn-xs\" ng-click=\"uncheckAll()\" type=\"button\"><i class=\"glyphicon glyphicon-remove\"></i> Uncheck all</button>\n" +
       "    </li>\n" +
       "    <li ng-repeat=\"i in items | filter:searchText\">\n" +
-      "      <a ng-click=\"select(i); focus()\">\n" +
+      "      <a ng-click=\"select(i);\">\n" +
       "        <i class=\"glyphicon\" ng-class=\"{'glyphicon-ok': i.checked, 'empty': !i.checked}\"></i> {{i.label}}</a>\n" +
       "    </li>\n" +
       "  </ul>\n" +
